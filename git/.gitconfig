@@ -1,0 +1,22 @@
+[user]
+  name = Linus Andersson
+  email = sunil.andersson@gmail.com
+
+[color]
+  ui = auto
+
+[core]
+  editor = nvim
+  excludesfile = ~/.gitignore_global
+
+[init]
+  defaultBranch = main
+
+[push]
+  default = current
+
+[pull]
+  rebase = false
+
+[includeIf "gitdir:~/work/"]
+  path = ~/.gitconfig.work

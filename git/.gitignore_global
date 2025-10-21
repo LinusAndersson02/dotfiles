@@ -1,0 +1,12 @@
+.env
+.env.* 
+*.pem
+*.key
+id_ed25519
+id_rsa
+.aws/
+.gnupg/
+.ssh/
+.config/gh/hosts.yml
+.config/git/credentials
+
