@@ -1,0 +1,15 @@
+# Help Antidote emulate OMZ libs if needed
+getantidote/use-omz
+
+# OMZ plugins (loaded via Antidote)
+ohmyzsh/ohmyzsh path:plugins/git
+ohmyzsh/ohmyzsh path:plugins/command-not-found
+ohmyzsh/ohmyzsh path:plugins/debian
+ohmyzsh/ohmyzsh path:plugins/docker
+ohmyzsh/ohmyzsh path:plugins/docker-compose
+
+# Popular non-OMZ plugins
+zsh-users/zsh-autosuggestions
+# keep syntax highlighting last
+zsh-users/zsh-syntax-highlighting
+
