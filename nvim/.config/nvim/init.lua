@@ -480,8 +480,13 @@ require("lazy").setup({
 			if vim.fn.executable('ruff') == 1 then
 				vim.lsp.enable('ruff')
 			end
+			
+			if vim.fn.executable('tailwindcss-language-server') == 1 then 
+				vim.lsp.enable('tailwindcss')
+			end
 
-			-- Global mappings.
+
+				-- Global mappings.
 			-- See `:help vim.diagnostic.*` for documentation on any of the below functions
 			vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float)
 			vim.keymap.set('n', '[d', vim.diagnostic.goto_prev)
@@ -521,7 +526,7 @@ require("lazy").setup({
 
 					-- TODO: find some way to make this only apply to the current line.
 					if client.server_capabilities.inlayHintProvider then
-					    vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
+					    vim.lsp.inlay_hint.enable(false, { bufnr = ev.buf })
 					end
 
 					-- None of this semantics tokens business.
@@ -532,9 +537,9 @@ require("lazy").setup({
 					if client.server_capabilities.documentFormattingProvider then
 						vim.api.nvim_create_autocmd("BufWritePre", {
 							group = vim.api.nvim_create_augroup("RustFormat", { clear = true }),
-							buffer = bufnr,
+							buffer = ev.buf,
 							callback = function()
-								vim.lsp.buf.format({ bufnr = bufnr })
+								vim.lsp.buf.format({ bufnr = ev.buf })
 							end,
 						})
 					end
