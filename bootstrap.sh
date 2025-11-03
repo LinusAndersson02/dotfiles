@@ -174,33 +174,66 @@ command -v corepack >/dev/null 2>&1 && corepack enable || true
 ok "Node $LTS_VER installed and set as default"
 
 # ------------------------------------------------------------------------------
-# 10) Neovim (incremental to latest tag, only rebuild when needed)
+# 10) Neovim (incremental build to latest tag; purge bad caches; ccache as launcher)
 # ------------------------------------------------------------------------------
 log "Neovim: incremental update to latest stable tag (skip if current)"
 sudo apt-get install -y ninja-build gettext cmake unzip curl build-essential ccache
-export CCACHE_DIR="${HOME}/.cache/ccache"
-mkdir -p "$CCACHE_DIR"
-export CC="ccache gcc" CXX="ccache g++"
+
+# ccache setup
+export CCACHE_DIR="${HOME}/.cache/ccache"; mkdir -p "$CCACHE_DIR"
+
 NVIM_SRC="${HOME}/.local/src/neovim"
 mkdir -p "${NVIM_SRC%/*}"
+
+# clone or update source
 if [[ -d "${NVIM_SRC}/.git" ]]; then
   git -C "${NVIM_SRC}" fetch --tags --force origin
 else
   git clone --depth 1 https://github.com/neovim/neovim "${NVIM_SRC}"
   git -C "${NVIM_SRC}" fetch --tags --force origin
 fi
+
+# discover latest tag / installed version
 LATEST_TAG="$(git -C "${NVIM_SRC}" describe --tags "$(git -C "${NVIM_SRC}" rev-list --tags --max-count=1)")"
 LATEST_VER="${LATEST_TAG#v}"
 INSTALLED_VER="$(nvim --version 2>/dev/null | sed -n '1s/^NVIM v//p' || true)"
+
+# if *any* cache forces /usr/bin/ccache as compiler, purge build & deps
+if grep -Rqs "/usr/bin/ccache" "${NVIM_SRC}/build" "${NVIM_SRC}/.deps" 2>/dev/null; then
+  warn "Found caches that set ccache as the compiler — cleaning Neovim build dirs"
+  make -C "${NVIM_SRC}" distclean || true
+  rm -rf "${NVIM_SRC}/build" "${NVIM_SRC}/.deps"
+fi
+
+# build only if needed
 if [[ -n "${INSTALLED_VER}" && "${INSTALLED_VER}" == "${LATEST_VER}" ]]; then
   ok "Neovim ${INSTALLED_VER} already installed — skipping rebuild"
 else
   echo "Updating Neovim to ${LATEST_TAG} (was: ${INSTALLED_VER:-none})..."
-  git -C "${NVIM_SRC}" checkout -f "${LATEST_TAG}"
-  make -C "${NVIM_SRC}" CMAKE_BUILD_TYPE=RelWithDebInfo -j"$(nproc)"
+  # ensure no CC/CXX leak from env
+  unset CC CXX
+
+  # 1st attempt: gcc/g++ + ccache as CMake launcher (works for deps too)
+  if ! make -C "${NVIM_SRC}" \
+        CMAKE_BUILD_TYPE=RelWithDebInfo \
+        CMAKE_C_COMPILER="$(command -v gcc)" \
+        CMAKE_CXX_COMPILER="$(command -v g++)" \
+        CMAKE_C_COMPILER_LAUNCHER=ccache \
+        CMAKE_CXX_COMPILER_LAUNCHER=ccache \
+        -j"$(nproc)"; then
+    warn "Build failed with ccache launcher — retrying without ccache"
+    make -C "${NVIM_SRC}" clean || true
+    make -C "${NVIM_SRC}" \
+      CMAKE_BUILD_TYPE=RelWithDebInfo \
+      CMAKE_C_COMPILER="$(command -v gcc)" \
+      CMAKE_CXX_COMPILER="$(command -v g++)" \
+      -j"$(nproc)"
+  fi
+
   sudo make -C "${NVIM_SRC}" install
-  ok "Neovim updated to ${LATEST_VER}"
+  ok "Neovim updated to ${LATEST_VER:-nightly}"
 fi
+
 
 # ------------------------------------------------------------------------------
 # 11) Flatpak + Flathub + Apps (Discord, Spotify)  [Wireshark via APT for capture]
