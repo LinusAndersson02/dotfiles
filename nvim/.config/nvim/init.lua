@@ -313,11 +313,16 @@ require("lazy").setup({
 		end
 	},
 	-- quick navigation
-	{
-		'ggandor/leap.nvim',
-		config = function()
-			require('leap').create_default_mappings()
-		end
+		{
+	  'ggandor/leap.nvim',
+	  config = function()
+	    local leap = require('leap')
+
+	    -- Recommended default mappings from the README:
+	    vim.keymap.set({ 'n', 'x', 'o' }, 's', '<Plug>(leap)')
+	    vim.keymap.set('n', 'S', '<Plug>(leap-from-window)')
+
+	  end,
 	},
 	-- better %
 	{
