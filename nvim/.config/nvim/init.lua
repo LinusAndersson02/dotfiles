@@ -481,10 +481,12 @@ require("lazy").setup({
 				vim.lsp.enable('ruff')
 			end
 			
+			-- Tailwind for css
 			if vim.fn.executable('tailwindcss-language-server') == 1 then 
 				vim.lsp.enable('tailwindcss')
 			end
-
+			
+			-- Clangd for cpp
 			if vim.fn.executable('clangd') == 1 then
 				vim.lsp.enable('clangd')
 			end
@@ -540,7 +542,7 @@ require("lazy").setup({
 					-- format on save for Rust
 					if client.server_capabilities.documentFormattingProvider then
 						vim.api.nvim_create_autocmd("BufWritePre", {
-							group = vim.api.nvim_create_augroup("RustFormat", { clear = true }),
+							group = vim.api.nvim_create_augroup("format", { clear = true }),
 							buffer = ev.buf,
 							callback = function()
 								vim.lsp.buf.format({ bufnr = ev.buf })
