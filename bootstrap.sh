@@ -59,7 +59,7 @@ sudo apt-get install -y \
   unzip zip tar xz-utils jq \
   python3 python3-pip python3-venv pipx \
   gcc g++ gdb valgrind \
-  clang clang-format clang-tidy libc++-dev libc++abi-dev \
+  clang clang-format clang-tidy clangd libc++-dev libc++abi-dev \
   stow tmux fish \
   ripgrep fzf fd-find tree htop luarocks \
   bat xclip \
