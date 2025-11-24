@@ -485,6 +485,10 @@ require("lazy").setup({
 				vim.lsp.enable('tailwindcss')
 			end
 
+			if vim.fn.executable('clangd') == 1 then
+				vim.lsp.enable('clangd')
+			end
+
 
 				-- Global mappings.
 			-- See `:help vim.diagnostic.*` for documentation on any of the below functions
