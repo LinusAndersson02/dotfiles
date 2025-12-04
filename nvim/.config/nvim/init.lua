@@ -2,6 +2,55 @@
 vim.keymap.set("n", "<Space>", "<Nop>", { silent = true })
 vim.g.mapleader = " "
 
+
+-- ChatGpt cooked something for me 
+-- now my clipboard now works on x11 and wayland
+vim.opt.clipboard = "unnamedplus"
+
+local function has(cmd) return vim.fn.executable(cmd) == 1 end
+
+if has("wl-copy") and has("wl-paste") and vim.env.WAYLAND_DISPLAY then
+  vim.g.clipboard = {
+    name = "wl-clipboard",
+    copy = {
+      ["+"] = { "wl-copy", "--foreground", "--type", "text/plain" },
+      ["*"] = { "wl-copy", "--foreground", "--type", "text/plain" },
+    },
+    paste = {
+      ["+"] = { "wl-paste", "--no-newline" },
+      ["*"] = { "wl-paste", "--no-newline" },
+    },
+    cache_enabled = 0,
+  }
+elseif has("xclip") then
+  vim.g.clipboard = {
+    name = "xclip",
+    copy = {
+      ["+"] = { "xclip", "-selection", "clipboard" },
+      ["*"] = { "xclip", "-selection", "primary" },
+    },
+    paste = {
+      ["+"] = { "xclip", "-selection", "clipboard", "-o" },
+      ["*"] = { "xclip", "-selection", "primary", "-o" },
+    },
+    cache_enabled = 0,
+  }
+elseif has("xsel") then
+  vim.g.clipboard = {
+    name = "xsel",
+    copy = {
+      ["+"] = { "xsel", "--clipboard", "--input" },
+      ["*"] = { "xsel", "--primary", "--input" },
+    },
+    paste = {
+      ["+"] = { "xsel", "--clipboard", "--output" },
+      ["*"] = { "xsel", "--primary", "--output" },
+    },
+    cache_enabled = 0,
+  }
+end
+
+
 -------------------------------------------------------------------------------
 --
 -- preferences
@@ -114,8 +163,10 @@ vim.keymap.set('', 'L', '$')
 -- Neat X clipboard integration
 -- <leader>p will paste clipboard into buffer
 -- <leader>c will copy entire buffer into clipboard
-vim.keymap.set('n', '<leader>p', '<cmd>read !wl-paste<cr>')
-vim.keymap.set('n', '<leader>c', '<cmd>w !wl-copy<cr><cr>')
+vim.opt.clipboard = "unnamedplus"
+vim.keymap.set("n", "<leader>c", "<cmd>%yank +<cr>")
+vim.keymap.set("n", "<leader>p", '"+p')
+
 -- <leader><leader> toggles between buffers
 vim.keymap.set('n', '<leader><leader>', '<c-^>')
 -- <leader>, shows/hides hidden characters
@@ -331,6 +382,16 @@ require("lazy").setup({
 			vim.g.matchup_matchparen_offscreen = { method = "popup" }
 		end
 	},
+
+	-- surround
+	{
+		"kylechui/nvim-surround",
+		version = "^3.0.0",
+		event = "VeryLazy",
+		config = function()
+			require("nvim-surround").setup({})
+		end,
+	},
 	-- option to center the editor
 	{
 		"shortcuts/no-neck-pain.nvim",
@@ -475,11 +536,7 @@ require("lazy").setup({
 			if vim.fn.executable('bash-language-server') == 1 then
 				vim.lsp.enable('bashls')
 			end
-
-			-- texlab for LaTeX
-			if vim.fn.executable('texlab') == 1 then
-				vim.lsp.enable('texlab')
-			end
+		
 
 			-- Ruff for Python
 			if vim.fn.executable('ruff') == 1 then
@@ -635,6 +692,7 @@ require("lazy").setup({
 	},
 	-- toml
 	'cespare/vim-toml',
+
 	-- yaml
 	{
 		"cuducos/yaml.nvim",
@@ -643,16 +701,7 @@ require("lazy").setup({
 			"nvim-treesitter/nvim-treesitter",
 		},
 	},
-	-- latex
-	{
-		"lervag/vimtex",
-		ft = { "tex" },
-		lazy = false,     -- we don't want to lazy load VimTeX
-		init = function()
-			vim.g.vimtex_view_method = "zathura"
-			vim.g.vimtex_mappings_enabled = false
-		end
-	},
+
 	-- fish
 	'khaveesh/vim-fish-syntax',
 	-- markdown
