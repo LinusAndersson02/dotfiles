@@ -13,8 +13,8 @@ if has("wl-copy") and has("wl-paste") and vim.env.WAYLAND_DISPLAY then
   vim.g.clipboard = {
     name = "wl-clipboard",
     copy = {
-      ["+"] = { "wl-copy", "--foreground", "--type", "text/plain" },
-      ["*"] = { "wl-copy", "--foreground", "--type", "text/plain" },
+      ["+"] = { "wl-copy", "--type", "text/plain" },
+      ["*"] = { "wl-copy", "--type", "text/plain" },
     },
     paste = {
       ["+"] = { "wl-paste", "--no-newline" },
