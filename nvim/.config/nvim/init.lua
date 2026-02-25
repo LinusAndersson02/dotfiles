@@ -429,76 +429,34 @@ require("lazy").setup({
 		end
 	},
 	-- fzf support for ^p
-	{
-		'ibhagwan/fzf-lua',
-		config = function()
-			-- stop putting a giant window over my editor
-			require'fzf-lua'.setup{
-				winopts = {
-					split = "belowright 10new",
-					preview = {
-						hidden = true,
-					}
-				},
-				files = {
-					-- file icons are distracting
-					file_icons = false,
-					-- git icons are nice
-					git_icons = true,
-					-- but don't mess up my anchored search
-					_fzf_nth_devicons = true,
-				},
-				buffers = {
-					file_icons = false,
-					git_icons = true,
-					-- no nth_devicons as we'll do that
-					-- manually since we also use
-					-- with-nth
-				},
-				fzf_opts = {
-					-- no reverse view
-					["--layout"] = "default",
-				},
-			}
-			-- when using C-p for quick file open, pass the file list through
-			--
-			--   https://github.com/jonhoo/proximity-sort
-			--
-			-- to prefer files closer to the current file.
-			vim.keymap.set('', '<C-p>', function()
-				opts = {}
-				opts.cmd = 'fd --color=never --hidden --type f --type l --exclude .git'
-				local base = vim.fn.fnamemodify(vim.fn.expand('%'), ':h:.:S')
-				if base ~= '.' then
-					-- if there is no current file,
-					-- proximity-sort can't do its thing
-					opts.cmd = opts.cmd .. (" | proximity-sort %s"):format(vim.fn.shellescape(vim.fn.expand('%')))
-				end
-				opts.fzf_opts = {
-				  ['--scheme']    = 'path',
-				  ['--tiebreak']  = 'index',
-				  ["--layout"]    = "default",
-				}
-				require'fzf-lua'.files(opts)
-			end)
-			-- use fzf to search buffers as well
-			vim.keymap.set('n', '<leader>;', function()
-				require'fzf-lua'.buffers({
-					-- just include the paths in the fzf bits, and nothing else
-					-- https://github.com/ibhagwan/fzf-lua/issues/2230#issuecomment-3164258823
-					fzf_opts = {
-					  ["--with-nth"]      = "{-3..-2}",
-					  ["--nth"]           = "-1",
-					  ["--delimiter"]     = "[:\u{2002}]",
-					  ["--header-lines"]  = "false",
-					},
-					header = false,
-				})
-			end)
-		end
-	},
+		{
+		  "ibhagwan/fzf-lua",
+		  -- optional: icons
+		  dependencies = { "nvim-tree/nvim-web-devicons" },
+		  config = function()
+		    require("fzf-lua").setup({}) -- optional, keeps defaults
+		   vim.keymap.set('n', '<C-p>', function()
+  local fzf = require('fzf-lua')
+  local cur = vim.api.nvim_buf_get_name(0)
+
+  -- If proximity-sort isn't available (or no current file), just use defaults
+  if vim.fn.executable('proximity-sort') ~= 1 or cur == "" then
+    return fzf.files()
+  end
+
+  -- Otherwise, generate a file list and proximity-sort it relative to the current file
+  local cmd = 'fd --color=never --type f --hidden --exclude .git'
+    .. ' | proximity-sort ' .. vim.fn.shellescape(cur)
+
+  fzf.files({
+    cmd = "sh -c " .. vim.fn.shellescape(cmd),
+    fzf_opts = { ['--tiebreak'] = 'index' },
+  })
+end, { desc = 'Find files (proximity-sort)' })
+		  end,
+		},
 	-- LSP
-	{
+		{
 		'neovim/nvim-lspconfig',
 		config = function()
 			-- Setup language servers.
@@ -555,6 +513,31 @@ require("lazy").setup({
 
 			if vim.fn.executable('typescript-language-server') == 1 then
 				vim.lsp.enable('ts_ls')
+			end
+
+
+			-- Java (jdtls)
+			if vim.fn.executable('jdtls') == 1 then
+			  local function jdtls_root(bufnr)
+			    return vim.fs.root(bufnr, {
+			      ".git",
+			      "mvnw", "pom.xml",
+			      "gradlew", "build.gradle", "settings.gradle",
+			    }) or vim.loop.cwd()
+			  end
+
+			  vim.lsp.config('jdtls', {
+			    root_dir = jdtls_root,
+
+			    -- give each project its own workspace
+			    on_new_config = function(new_config, new_root_dir)
+			      local project = vim.fn.fnamemodify(new_root_dir, ':p:h:t')
+			      local workspace = vim.fn.stdpath('data') .. '/jdtls-workspace/' .. project
+			      new_config.cmd = { 'jdtls', '-data', workspace }
+			    end,
+			  })
+
+			  vim.lsp.enable('jdtls') 
 			end
 
 
