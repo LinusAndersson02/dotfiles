@@ -518,25 +518,6 @@ end, { desc = 'Find files (proximity-sort)' })
 
 			-- Java (jdtls)
 			if vim.fn.executable('jdtls') == 1 then
-			  local function jdtls_root(bufnr)
-			    return vim.fs.root(bufnr, {
-			      ".git",
-			      "mvnw", "pom.xml",
-			      "gradlew", "build.gradle", "settings.gradle",
-			    }) or vim.loop.cwd()
-			  end
-
-			  vim.lsp.config('jdtls', {
-			    root_dir = jdtls_root,
-
-			    -- give each project its own workspace
-			    on_new_config = function(new_config, new_root_dir)
-			      local project = vim.fn.fnamemodify(new_root_dir, ':p:h:t')
-			      local workspace = vim.fn.stdpath('data') .. '/jdtls-workspace/' .. project
-			      new_config.cmd = { 'jdtls', '-data', workspace }
-			    end,
-			  })
-
 			  vim.lsp.enable('jdtls') 
 			end
 
